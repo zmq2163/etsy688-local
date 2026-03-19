@@ -6,3 +6,5 @@ frontend/src/
 .env
 .DS_Store
 *.zip
+package-lock.json
+packages-lock.json
