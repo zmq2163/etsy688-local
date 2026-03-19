@@ -325,7 +325,13 @@ app.get('/{*path}', (req, res) => {
   else res.send('<html><body><h1>Etsy688 Local</h1><p><a href="/admin">Admin</a></p></body></html>');
 });
 
-app.listen(PORT, '0.0.0.0', function() {
-  console.log('Etsy688 Local running on http://0.0.0.0:' + PORT);
-  console.log('Admin panel: http://0.0.0.0:' + PORT + '/admin');
-});
+// Vercel serverless export
+if (process.env.VERCEL) {
+  const serverless = require('serverless-http');
+  module.exports = serverless(app);
+} else {
+  app.listen(PORT, '0.0.0.0', function() {
+    console.log('Etsy688 Local running on http://0.0.0.0:' + PORT);
+    console.log('Admin panel: http://0.0.0.0:' + PORT + '/admin');
+  });
+}
