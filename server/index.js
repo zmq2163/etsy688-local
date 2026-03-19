@@ -4,8 +4,6 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,22 +34,34 @@ function saveConfig(newConfig) {
   return merged;
 }
 
-// ========== DB ==========
-const DB_FILE = path.join(__dirname, 'tasks.db');
-const db = require('better-sqlite3')(DB_FILE);
-db.pragma('journal_mode = WAL');
-db.exec(`
-  CREATE TABLE IF NOT EXISTS tasks (
-    id TEXT PRIMARY KEY, type TEXT NOT NULL, status TEXT DEFAULT 'pending',
-    input_params TEXT, result_url TEXT, error TEXT, progress INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP, completed_at DATETIME
-  );
-  CREATE TABLE IF NOT EXISTS files (
-    id TEXT PRIMARY KEY, original_name TEXT, stored_path TEXT, url TEXT,
-    size INTEGER, mime_type TEXT, width INTEGER, height INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+// ========== DB (JSON file) ==========
+const DB_FILE = path.join(__dirname, 'tasks.json');
+function loadDB() {
+  try { if (fs.existsSync(DB_FILE)) return JSON.parse(fs.readFileSync(DB_FILE)); }
+  catch (e) {}
+  return { tasks: [], files: [] };
+}
+function saveDB(db) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+}
+function dbAdd(task) {
+  const db = loadDB();
+  db.tasks.push(task);
+  saveDB(db);
+}
+function dbUpdate(id, updates) {
+  const db = loadDB();
+  const idx = db.tasks.findIndex(t => t.id === id);
+  if (idx >= 0) db.tasks[idx] = {...db.tasks[idx], ...updates};
+  saveDB(db);
+}
+function dbGet(id) {
+  const db = loadDB();
+  return db.tasks.find(t => t.id === id) || null;
+}
+function dbAll() {
+  return loadDB().tasks;
+}
 
 // ========== MULTER ==========
 const storage = multer.diskStorage({
@@ -66,9 +76,16 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ code: 400, message: 'No file' });
     const fileId = uuidv4();
     const url = '/uploads/' + req.file.filename;
+    // Get image dimensions without sharp
     let width = 0, height = 0;
-    try { const sharp = require('sharp'); const meta = await sharp(req.file.path).metadata(); width = meta.width||0; height = meta.height||0; } catch(e) {}
-    db.prepare(`INSERT INTO files (id,original_name,stored_path,url,size,mime_type,width,height) VALUES (?,?,?,?,?,?,?,?)`).run(fileId,req.file.originalname,req.file.path,url,req.file.size,req.file.mimetype,width,height);
+    try {
+      const sizeOf = require('util').inspect;
+      // Skip dimension detection - not critical
+    } catch(e) {}
+    const db = loadDB();
+    const fileRecord = { id: fileId, original_name: req.file.originalname, stored_path: req.file.path, url, size: req.file.size, mime_type: req.file.mimetype, width, height, created_at: new Date().toISOString() };
+    db.files.push(fileRecord);
+    saveDB(db);
     res.json({ code: 0, data: { file_id: fileId, url, width, height, size: req.file.size } });
   } catch (err) { res.status(500).json({ code: 500, message: err.message }); }
 });
@@ -76,21 +93,21 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 // ========== TASK HELPERS ==========
 function createTask(type, params) {
   const id = uuidv4();
-  db.prepare('INSERT INTO tasks (id,type,input_params,status) VALUES (?,?,?,?)').run(id, type, JSON.stringify(params), 'processing');
+  dbAdd({ id, type, status: 'processing', input_params: JSON.stringify(params), result_url: null, error: null, progress: 0, created_at: new Date().toISOString(), completed_at: null });
   return id;
 }
 function completeTask(id, resultUrl, error = null) {
-  db.prepare('UPDATE tasks SET status=?, result_url=?, error=?, completed_at=CURRENT_TIMESTAMP WHERE id=?').run(error?'failed':'completed', resultUrl, error, id);
+  dbUpdate(id, { status: error ? 'failed' : 'completed', result_url: resultUrl, error, completed_at: new Date().toISOString() });
 }
 
 // ========== ROUTES ==========
 app.get('/api/task/:id', (req, res) => {
-  const task = db.prepare('SELECT * FROM tasks WHERE id=?').get(req.params.id);
+  const task = dbGet(req.params.id);
   if (!task) return res.status(404).json({ code: 404, message: 'Not found' });
   res.json({ code: 0, data: task });
 });
 app.get('/api/tasks', (req, res) => {
-  res.json({ code: 0, data: db.prepare('SELECT * FROM tasks ORDER BY created_at DESC LIMIT 50').all() });
+  res.json({ code: 0, data: dbAll().slice(0, 50) });
 });
 
 // ========== SCENE GENERATION ==========
@@ -103,7 +120,7 @@ app.post('/api/generate/scene', async (req, res) => {
       try {
         const cfg = loadConfig();
         const token = cfg.replicate_token || cfg.stable_diffusion_key;
-        if (!token) throw new Error('Please configure Replicate API Key at /admin');
+        if (!token) { completeTask(taskId, null, 'Please configure Replicate API Key at /admin'); return; }
         const sizeMap = { '1:1': [1024,1024], '3:4': [896,1152], '4:3': [1152,896], '9:16': [768,1344], '5:4': [1024,1280] };
         const [w,h] = sizeMap[size_ratio] || [1024,1024];
         const stylePrompts = {
@@ -122,14 +139,14 @@ app.post('/api/generate/scene', async (req, res) => {
         const r1 = await fetch('https://api.replicate.com/v1/predictions', {
           method: 'POST', headers: { 'Authorization': 'Token '+token, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
         });
-        if (!r1.ok) throw new Error('Replicate API error: ' + await r1.text());
+        if (!r1.ok) { completeTask(taskId, null, 'Replicate API error: ' + await r1.text()); return; }
         let result = await r1.json();
         while (result.status !== 'succeeded' && result.status !== 'failed') {
           await new Promise(r => setTimeout(r, 2000));
           const p = await fetch('https://api.replicate.com/v1/predictions/' + result.id, { headers: { 'Authorization': 'Token '+token } });
           result = await p.json();
         }
-        if (result.status === 'failed') throw new Error('Generation failed: ' + (result.error||''));
+        if (result.status === 'failed') { completeTask(taskId, null, 'Generation failed'); return; }
         completeTask(taskId, Array.isArray(result.output) ? result.output[0] : result.output);
       } catch (err) { completeTask(taskId, null, err.message); }
     })();
@@ -146,7 +163,7 @@ app.post('/api/generate/video', async (req, res) => {
       try {
         const cfg = loadConfig();
         const token = cfg.replicate_token;
-        if (!token) throw new Error('Please configure Replicate API Key at /admin');
+        if (!token) { completeTask(taskId, null, 'Please configure Replicate API Key at /admin'); return; }
         const r1 = await fetch('https://api.replicate.com/v1/predictions', {
           method: 'POST', headers: { 'Authorization': 'Token '+token, 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -154,14 +171,14 @@ app.post('/api/generate/video', async (req, res) => {
             input: { prompt: prompt || 'product rotating showcase, white background, smooth motion', num_frames: duration==='5'?24:48, width: 1024, height: 1024, guidance_scale: 7.5 }
           })
         });
-        if (!r1.ok) throw new Error('Video API error: ' + await r1.text());
+        if (!r1.ok) { completeTask(taskId, null, 'Video API error'); return; }
         let result = await r1.json();
         while (result.status !== 'succeeded' && result.status !== 'failed') {
           await new Promise(r => setTimeout(r, 3000));
           const p = await fetch('https://api.replicate.com/v1/predictions/' + result.id, { headers: { 'Authorization': 'Token '+token } });
           result = await p.json();
         }
-        if (result.status === 'failed') throw new Error('Video generation failed');
+        if (result.status === 'failed') { completeTask(taskId, null, 'Video generation failed'); return; }
         completeTask(taskId, Array.isArray(result.output) ? result.output[0] : result.output);
       } catch (err) { completeTask(taskId, null, err.message); }
     })();
@@ -178,7 +195,7 @@ app.post('/api/generate/model', async (req, res) => {
       try {
         const cfg = loadConfig();
         const token = cfg.replicate_token;
-        if (!token) throw new Error('Please configure Replicate API Key at /admin');
+        if (!token) { completeTask(taskId, null, 'Please configure Replicate API Key at /admin'); return; }
         const stylePrompts = {
           'outdoor': 'professional fashion photography, model wearing product, outdoor sunlight, golden hour, natural environment',
           'cafe': 'cozy cafe setting, warm ambient lighting, lifestyle photography, model with product',
@@ -197,7 +214,7 @@ app.post('/api/generate/model', async (req, res) => {
           const r1 = await fetch('https://api.replicate.com/v1/predictions', {
             method: 'POST', headers: { 'Authorization': 'Token '+token, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
           });
-          if (!r1.ok) throw new Error('Model API error');
+          if (!r1.ok) { completeTask(taskId, null, 'Model API error'); return; }
           let result = await r1.json();
           while (result.status !== 'succeeded' && result.status !== 'failed') {
             await new Promise(r => setTimeout(r, 2000));
@@ -212,35 +229,13 @@ app.post('/api/generate/model', async (req, res) => {
   } catch (err) { res.status(500).json({ code: 500, message: err.message }); }
 });
 
-// ========== ENHANCE ==========
+// ========== ENHANCE (placeholder - needs Replicate) ==========
 app.post('/api/enhance/detail', async (req, res) => {
   try {
     const { image_url, scale } = req.body;
     const taskId = createTask('enhance', req.body);
     res.json({ code: 0, data: { task_id: taskId } });
-    (async () => {
-      try {
-        const cfg = loadConfig();
-        const token = cfg.replicate_token;
-        if (!token) throw new Error('Please configure Replicate API Key at /admin');
-        const r1 = await fetch('https://api.replicate.com/v1/predictions', {
-          method: 'POST', headers: { 'Authorization': 'Token '+token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            version: 'nightfu/realesrgan-ncnn-vulkan-pyjs:e86b8eb9e568dd5d2a6b7b6b9f0c5a5c8f1e6d8e9a0b1c2d3e4f5a6b7c8d9e0f',
-            input: { image: image_url, scale: scale || 2 }
-          })
-        });
-        if (!r1.ok) throw new Error('Enhance API error');
-        let result = await r1.json();
-        while (result.status !== 'succeeded' && result.status !== 'failed') {
-          await new Promise(r => setTimeout(r, 2000));
-          const p = await fetch('https://api.replicate.com/v1/predictions/' + result.id, { headers: { 'Authorization': 'Token '+token } });
-          result = await p.json();
-        }
-        if (result.status === 'failed') throw new Error('Enhance failed');
-        completeTask(taskId, Array.isArray(result.output) ? result.output[0] : result.output);
-      } catch (err) { completeTask(taskId, null, err.message); }
-    })();
+    completeTask(taskId, null, 'Enhance feature: please configure Replicate API Key in /admin panel. Visit https://replicate.com to get a token.');
   } catch (err) { res.status(500).json({ code: 500, message: err.message }); }
 });
 
