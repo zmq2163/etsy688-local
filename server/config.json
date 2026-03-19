@@ -1,0 +1,8 @@
+{
+  "stable_diffusion_key": "",
+  "openai_key": "sk-test456",
+  "replicate_token": "r8_test123",
+  "pika_key": "",
+  "admin_pin": "1234",
+  "max_concurrent_tasks": 3
+}

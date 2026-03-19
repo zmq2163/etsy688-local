@@ -1,0 +1,12 @@
+{
+  "name": "etsy688-local",
+  "version": "1.0.0",
+  "description": "Etsy688 Local AI Creative Tool",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

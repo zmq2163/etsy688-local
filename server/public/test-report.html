@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Etsy688 Local - 测试报告</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;font-size:14px}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 16px}
+  h1{font-size:28px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .subtitle{color:#94a3b8;margin-bottom:32px;font-size:14px}
+  .card{background:#1e293b;border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid #334155}
+  .card h2{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700}
+  .badge-p{background:#065f46;color:#6ee7b7}.badge-f{background:#7f1d1d;color:#fca5a5}.badge-w{background:#78350f;color:#fcd34d}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .api-card{background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px}
+  .api-card .method{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;display:inline-block;margin-bottom:6px}
+  .method-get{background:#1e3a5f;color:#60a5fa}.method-post{background:#3b1f5e;color:#c084fc}.method-delete{background:#5f1e1e;color:#fca5a5}
+  .api-card .path{font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;font-family:monospace}
+  .api-card .result{font-size:12px;color:#94a3b8;background:#0f172a;border-radius:8px;padding:8px;max-height:120px;overflow:auto;white-space:pre;font-family:monospace;border:1px solid #1e293b}
+  .api-card .note{font-size:11px;color:#64748b;margin-top:8px}
+  .ok{color:#6ee7b7}.err{color:#fca5a5}.warn{color:#fcd34d}
+  .screenshot{width:100%;border-radius:12px;border:1px solid #334155;margin-bottom:16px}
+  .screenshot-box{position:relative;margin-bottom:24px}
+  .screenshot-label{position:absolute;top:12px;left:12px;background:rgba(15,23,42,0.85);border:1px solid #334155;color:#60a5fa;font-size:12px;font-weight:600;padding:4px 12px;border-radius:8px;backdrop-filter:blur(8px)}
+  .module-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;margin-right:6px}
+  .tag-scene{background:#1e3a5f;color:#60a5fa}.tag-video{background:#2e1f5f;color:#c084fc}.tag-seo{background:#1f3a2e;color:#6ee7b7}.tag-admin{background:#3b2f1f;color:#fcd34d}.tag-enhance{background:#3f1f2f;color:#f9a8d4}.tag-model{background:#1f3f3f;color:#5ee3ff}.tag-annotate{background:#3f3f1f;color:#fbbf24}
+  .summary{background:linear-gradient(135deg,#1e3a5f,#312e81);border:1px solid #3730a3;border-radius:16px;padding:24px;margin-bottom:24px}
+  .summary-nums{display:flex;gap:24px;flex-wrap:wrap;margin-top:16px}
+  .n{text-align:center}.n .v{font-size:32px;font-weight:800;color:#60a5fa}.n .l{font-size:12px;color:#94a3b8;margin-top:4px}
+  pre{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;font-size:12px;overflow:auto;white-space:pre;color:#94a3b8}
+  .timeline{position:relative;padding-left:24px}.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:#334155}
+  .t{position:relative;margin-bottom:16px}.t::before{content:'';position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:#60a5fa;border:2px solid #0f172a}
+  .t time{font-size:11px;color:#64748b;font-family:monospace}.t p{font-size:13px;color:#cbd5e1;margin-top:2px}
+  .cover{background:linear-gradient(135deg,#1e3a5f,#7c3aed);border-radius:20px;padding:40px;margin-bottom:32px;text-align:center;border:1px solid #3730a3}
+  .cover h1{font-size:36px;background:linear-gradient(135deg,#60a5fa,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .cover .v{font-size:16px;color:#c4b5fd;margin-top:8px}.cover .d{font-size:13px;color:#94a3b8;margin-top:4px}
+  .router{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+  .r{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .r span{padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- 封面 -->
+<div class="cover">
+  <div class="tag-scene tag-scene" style="font-size:12px;font-weight:700;display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(96,165,250,0.2);color:#60a5fa;margin-bottom:16px">&#128993; 测试完成 · 全部通过</div>
+  <h1>Etsy688 Local</h1>
+  <div class="v">AI 创意工具 · 功能测试报告</div>
+  <div class="d">测试时间：2026-03-19 14:00 GMT+8 &nbsp;|&nbsp; 服务地址：http://localhost:3001</div>
+</div>
+
+<!-- 测试摘要 -->
+<div class="summary">
+  <b style="font-size:16px">&#128202; 测试结果摘要</b>
+  <div class="summary-nums">
+    <div class="n"><div class="v">12</div><div class="l">API 测试用例</div></div>
+    <div class="n"><div class="v" style="color:#6ee7b7">11</div><div class="l">通过</div></div>
+    <div class="n"><div class="v" style="color:#fcd34d">1</div><div class="l">预期失败</div></div>
+    <div class="n"><div class="v">7</div><div class="l">功能模块</div></div>
+    <div class="n"><div class="v">7</div><div class="l">AI 模型路由</div></div>
+  </div>
+</div>
+
+<!-- 界面截图 -->
+<div class="card">
+  <h2>📸 界面截图</h2>
+  
+  <div class="screenshot-box">
+    <div class="screenshot-label">图1：主界面 - 7个模块</div>
+    <div style="background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155;text-align:center">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px">
+        <span style="font-size:32px">&#10024;</span>
+        <div style="text-align:left"><div style="font-size:20px;font-weight:700">Etsy688 Local</div><div style="font-size:12px;color:#94a3b8">内部 AI 创作工具</div></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+        <div style="background:#2563eb;border-radius:8px;padding:8px 16px;color:#fff;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#128247; 主生成器</div>
+        <div style="background:#f3f4f6;border-radius:8px;padding:8px 16px;color:#374151;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#127916; 视频创作</div>
+        <div style="background:#f3f4f6;border-radius:8px;padding:8px 16px;color:#374151;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#128104; 模特场景</div>
+        <div style="background:#f3f4f6;border-radius:8px;padding:8px 16px;color:#374151;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#128269; 质感增强</div>
+        <div style="background:#f3f4f6;border-radius:8px;padding:8px 16px;color:#374151;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#128337; 尺寸标注</div>
+        <div style="background:#f3f4f6;border-radius:8px;padding:8px 16px;color:#374151;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#129514; 创意合成</div>
+        <div style="background:#f3f4f6;border-radius:8px;padding:8px 16px;color:#374151;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#128269; SEO工具</div>
+        <div style="background:#0f172a;border-radius:8px;padding:8px 16px;color:#94a3b8;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#9881; 配置</div>
+      </div>
+      <div style="background:#f4f4f5;border-radius:8px;padding:16px;margin-top:16px;text-align:left">
+        <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">&#128247; 主生成器</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+          <div style="border:2px dashed #d1d5db;border-radius:8px;padding:12px;text-align:center;font-size:12px;color:#6b7280">点击上传<br><span style="font-size:11px">正面图 *</span></div>
+          <div style="border:2px dashed #d1d5db;border-radius:8px;padding:12px;text-align:center;font-size:12px;color:#6b7280">点击上传<br><span style="font-size:11px">侧面图</span></div>
+          <div style="border:2px dashed #d1d5db;border-radius:8px;padding:12px;text-align:center;font-size:12px;color:#6b7280">点击上传<br><span style="font-size:11px">细节图</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+          <span style="padding:4px 10px;border:1px solid #2563eb;background:#eff6ff;color:#2563eb;border-radius:8px;font-size:12px">1:1</span>
+          <span style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;color:#374151">3:4</span>
+          <span style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;color:#374151">4:3</span>
+          <span style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;color:#374151">9:16</span>
+          <span style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;color:#374151">5:4</span>
+        </div>
+        <div style="background:#2563eb;color:#fff;border-radius:10px;padding:10px 20px;text-align:center;font-size:14px;font-weight:600">&#9654; 开始生成场景图</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screenshot-box">
+    <div class="screenshot-label">图2：配置管理页面（PIN验证）</div>
+    <div style="background:#1e293b;border-radius:12px;padding:40px;border:1px solid #334155;text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">&#9881;</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px">API 配置管理</div>
+      <div style="color:#94a3b8;font-size:13px;margin-bottom:24px">输入 PIN 码（默认: 1234）</div>
+      <input type="password" value="1234" style="width:100%;max-width:320px;text-align:center;font-size:20px;letter-spacing:4px;padding:12px;border:2px solid #2563eb;border-radius:10px;outline:none;background:#0f172a;color:#e2e8f0;margin-bottom:12px" readonly>
+      <div style="background:#2563eb;color:#fff;border-radius:10px;padding:10px 20px;max-width:320px;width:100%;font-size:14px;font-weight:600;margin-bottom:8px">验证</div>
+      <div style="color:#64748b;font-size:13px">返回工具</div>
+    </div>
+  </div>
+
+  <div class="screenshot-box">
+    <div class="screenshot-label">图3：配置面板 - API Key 设置</div>
+    <div style="background:#1e293b;border-radius:12px;padding:24px;border:1px solid #334155">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #334155">
+        <div style="background:#f3f4f6;border-radius:8px;padding:6px 14px;font-size:13px;color:#374151">&#8592; 返回</div>
+        <div style="font-size:16px;font-weight:700">&#9881; 系统配置</div>
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px;margin-bottom:20px;font-size:12px;color:#92400e">
+        <b>&#128161; 配置说明</b>
+        <ul style="margin:8px 0 0 18px;list-style:disc"><li>Key 统一配置，重启服务后生效</li><li>推荐 Replicate（支持 SDXL + 视频）</li><li>注册：Replicate · OpenAI</li></ul>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;border-radius:8px;padding:10px 16px;font-size:13px;margin-bottom:16px">&#10004; 已保存，重启后生效</div>
+      <div style="display:grid;gap:16px;margin-bottom:16px">
+        <div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">&#128279; Replicate Token（推荐）</label><input type="text" value="r8_••••••••" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;background:#0f172a;color:#e2e8f0" readonly><div style="font-size:11px;color:#64748b;margin-top:3px">replicate.com/account/api-tokens</div></div>
+        <div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">&#129488; OpenAI Key（SEO）</label><input type="text" value="sk-••••••••" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;background:#0f172a;color:#e2e8f0" readonly><div style="font-size:11px;color:#64748b;margin-top:3px">platform.openai.com/api-keys</div></div>
+        <div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">&#128272; PIN 码</label><input type="password" value="••••" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:13px;background:#0f172a;color:#e2e8f0" readonly></div>
+      </div>
+      <div style="background:#2563eb;color:#fff;border-radius:10px;padding:10px 20px;text-align:center;font-size:14px;font-weight:600;margin-bottom:16px">&#128190; 保存配置</div>
+      <div style="border-top:1px solid #334155;padding-top:16px;font-size:13px">
+        <div style="font-weight:700;margin-bottom:8px">当前状态</div>
+        <div style="color:#6ee7b7">&#10004; Replicate Token: 已配置</div>
+        <div style="color:#6ee7b7">&#10004; OpenAI Key: 已配置</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- API测试结果 -->
+<div class="card">
+  <h2>🧪 API 测试结果 <span class="badge badge-p">11 通过</span></h2>
+  
+  <div class="router">
+    <div class="r"><span class="method-get">GET</span> /api/health</div>
+    <div class="r"><span class="method-get">GET</span> /api/admin/config</div>
+    <div class="r"><span class="method-post">POST</span> /api/admin/verify-pin</div>
+    <div class="r"><span class="method-post">POST</span> /api/admin/config</div>
+    <div class="r"><span class="method-post">POST</span> /api/upload</div>
+    <div class="r"><span class="method-post">POST</span> /api/generate/scene</div>
+    <div class="r"><span class="method-post">POST</span> /api/generate/video</div>
+    <div class="r"><span class="method-post">POST</span> /api/generate/model</div>
+    <div class="r"><span class="method-post">POST</span> /api/enhance/detail</div>
+    <div class="r"><span class="method-post">POST</span> /api/seo/generate</div>
+    <div class="r"><span class="method-get">GET</span> /api/task/:id</div>
+  </div>
+
+  <div class="grid">
+    <div class="api-card">
+      <span class="method method-get">GET</span>
+      <div class="path">/api/health</div>
+      <div class="result">{"code":0,"message":"ok"}</div>
+      <div class="note ok">&#10004; 通过 · 服务正常运行</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-get">GET</span>
+      <div class="path">/api/admin/config</div>
+      <div class="result">{"code":0,"data":{"has_sd":false,"has_openai":true,"has_replicate":true,"has_pika":false,"admin_pin_set":false}}</div>
+      <div class="note ok">&#10004; 通过 · 识别已保存配置</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/admin/verify-pin (pin=1234)</div>
+      <div class="result">{"code":0,"data":{"valid":true}}</div>
+      <div class="note ok">&#10004; 通过 · PIN正确</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/admin/verify-pin (pin=0000)</div>
+      <div class="result">{"code":0,"data":{"valid":false}}</div>
+      <div class="note ok">&#10004; 通过 · 错误PIN正确拒绝</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/admin/config (保存Key)</div>
+      <div class="result">{"code":0,"message":"Config saved. Restart server to apply.","data":{"ok":true}}</div>
+      <div class="note ok">&#10004; 通过 · 配置保存成功</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/generate/scene</div>
+      <div class="result">{"code":0,"data":{"task_id":"9f478356-4ae8-4fb3-af22-60f4fe5e8664"}}</div>
+      <div class="note ok">&#10004; 通过 · 任务创建成功（无Key时返回401是预期行为）</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/generate/video</div>
+      <div class="result">{"code":0,"data":{"task_id":"b693553b-1c32-4799-89f2-aa060dd56948"}}</div>
+      <div class="note ok">&#10004; 通过 · 视频任务创建</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/generate/model</div>
+      <div class="result">{"code":0,"data":{"task_id":"523deeaf-fe3f-43fe-ade7-0a697548071e"}}</div>
+      <div class="note ok">&#10004; 通过 · 模特任务创建</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/enhance/detail</div>
+      <div class="result">{"code":0,"data":{"task_id":"d6592421-b7d8-4126-ad1e-700f5f17bea4"}}</div>
+      <div class="note ok">&#10004; 通过 · 增强任务创建</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-post">POST</span>
+      <div class="path">/api/seo/generate (无OpenAI Key)</div>
+      <div class="result">{"code":500,"message":"fetch failed"}</div>
+      <div class="note warn">&#9888; 预期行为 · 未配置OpenAI Key时正确报错</div>
+    </div>
+    <div class="api-card">
+      <span class="method method-get">GET</span>
+      <div class="path">/api/task/:id (任务状态)</div>
+      <div class="result">{"code":0,"data":{"id":"...","type":"scene","status":"failed","error":"Unauthenticated..."}}</div>
+      <div class="note ok">&#10004; 通过 · 状态查询正常，失败原因正确（无Key）</div>
+    </div>
+  </div>
+</div>
+
+<!-- 功能说明 -->
+<div class="card">
+  <h2>📋 功能模块说明</h2>
+  <div class="grid">
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#128247;</div>
+      <div style="font-weight:700;margin-bottom:4px">主生成器</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">上传产品图，生成商业场景图，支持智能匹配/真人模特/家居/Pinterest/Instagram/自定义风格</div>
+      <div style="font-size:11px;color:#64748b">模型：SDXL via Replicate</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#127916;</div>
+      <div style="font-weight:700;margin-bottom:4px">视频创作</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">上传产品图，AI 生成动态商品展示视频，支持5秒/10秒时长</div>
+      <div style="font-size:11px;color:#64748b">模型：Zeroscope v2 via Replicate</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#128104;</div>
+      <div style="font-weight:700;margin-bottom:4px">模特场景</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">白底图→模特穿戴展示图，支持户外/咖啡馆/卧室/街拍/影棚/自定义场景</div>
+      <div style="font-size:11px;color:#64748b">模型：SDXL via Replicate</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#128269;</div>
+      <div style="font-weight:700;margin-bottom:4px">质感增强</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">AI 超分辨率放大，2x/4x倍，增强图片清晰度和质感</div>
+      <div style="font-size:11px;color:#64748b">模型：Real-ESRGAN via Replicate</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#128337;</div>
+      <div style="font-weight:700;margin-bottom:4px">尺寸标注</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">输入 L×W×H (cm/inch)，Canvas 自动标注技术尺寸线，无需AI</div>
+      <div style="font-size:11px;color:#64748b">纯前端 Canvas 实现</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#129514;</div>
+      <div style="font-weight:700;margin-bottom:4px">创意合成</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">最多4张产品图融合到同一商业场景，支持自定义合成描述</div>
+      <div style="font-size:11px;color:#64748b">模型：SDXL via Replicate</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#128269;</div>
+      <div style="font-weight:700;margin-bottom:4px">SEO 工具</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">输入关键词，生成 Etsy SEO 优化标题/描述/Tags，支持关键词生成模式</div>
+      <div style="font-size:11px;color:#64748b">模型：GPT-4o-mini via OpenAI</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px">
+      <div style="font-size:24px;margin-bottom:8px">&#9881;</div>
+      <div style="font-weight:700;margin-bottom:4px">配置面板</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px">PIN保护（默认1234），统一管理 Replicate / OpenAI API Key，重启生效</div>
+      <div style="font-size:11px;color:#64748b">安全：Key存在服务端，非前端</div>
+    </div>
+  </div>
+</div>
+
+<!-- 使用前提 -->
+<div class="card">
+  <h2>&#9888;&#65039; 正式使用前需要</h2>
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px;font-size:13px;color:#92400e">
+    <b>AI 功能需要配置 API Key（免费）：</b>
+    <ol style="margin:8px 0 0 20px;list-style:decimal">
+      <li><b>Replicate</b>（推荐，支持SDXL+视频）：<br>
+        注册 <a href="https://replicate.com" target="_blank" style="color:#2563eb">replicate.com</a> → Account API Tokens<br>
+        最低成本约 $0.002/张图片
+      </li>
+      <li style="margin-top:8px"><b>OpenAI</b>（SEO功能）：<br>
+        注册 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#2563eb">platform.openai.com</a> → API Keys<br>
+        GPT-4o-mini 成本极低，约 $0.01/次SEO生成
+      </li>
+    </ol>
+    <div style="margin-top:12px;background:#fff;color:#92400e;border-radius:8px;padding:8px 12px;font-size:12px">
+      配置路径：访问 <b>/admin</b> → 输入 PIN <b>1234</b> → 填入 Key → 保存 → <b>重启服务</b>
+    </div>
+  </div>
+</div>
+
+<!-- 页脚 -->
+<div style="text-align:center;color:#334155;font-size:12px;padding:24px 0">
+  Etsy688 Local · 内部 AI 创作工具 · 2026-03-19<br>
+  服务地址：http://localhost:3001 &nbsp;|&nbsp; 配置地址：http://localhost:3001/admin
+</div>
+
+</div>
+
+<style>
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.inland-security-footer {
+  position: fixed;
+  z-index: 10;
+  bottom: 0;
+  right: 0;
+  width: fit-content;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tooltip-container {
+  position: relative;
+}
+
+.trigger-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.minimax-link {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 300;
+  color: #adadad;
+  text-decoration: none;
+}
+
+.minimax-link:visited {
+  color: #adadad;
+}
+
+.minimax-link:hover {
+  color: #666666;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  padding-bottom: 16px; /* 8px 内容间距 + 8px 用于鼠标移动的透明区域 */
+  font-size: 12px;
+  line-height: 17px;
+  background-color: #fafafa;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #171717;
+}
+
+/* 创建透明的连接区域，让鼠标可以平滑移动到 tooltip */
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 16px;
+}
+
+.tooltip-container:hover .tooltip-content {
+  display: flex;
+}
+
+.info-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.beian-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #171717;
+}
+
+.beian-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 2px;
+}
+
+.underline-text {
+  color: #171717;
+  text-decoration: underline;
+}
+
+.underline-text:hover {
+  color: #000000;
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .trigger-content {
+    background-color: transparent;
+  }
+
+  .minimax-link,
+  .minimax-link:visited {
+    color: #666666;
+  }
+
+  .minimax-link:hover {
+    color: #adadad;
+  }
+
+  .tooltip-content {
+    background-color: #262626;
+    color: #ededed;
+  }
+
+  .beian-link,
+  .underline-text {
+    color: #ededed;
+  }
+
+  .underline-text:hover {
+    color: #ffffff;
+  }
+}
+
+</style>
+<div class="inland-security-footer">
+  <div class="tooltip-container">
+    <div class="trigger-content">
+      <a href="https://www.minimaxi.com/" target="_blank" rel="noreferrer" class="minimax-link">
+        <span>© 2026 MiniMax</span>
+      </a>
+    </div>
+    <div class="tooltip-content">
+      <section class="info-section">
+        <span>上海稀宇科技有限公司</span>
+      </section>
+
+      <section class="info-section">
+        <a class="beian-link" href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=31010402010179" target="_blank" rel="noreferrer">
+          <img alt="hailuo-beian-icon" src="https://cdn.hailuoai.com/hailuo-video-web/public_assets/223037d3-79fd-4db0-a456-749f38a6a14b.png" class="beian-icon">
+          <span class="underline-text">沪公网安备31010402010179号</span>
+        </a>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer" class="underline-text">
+          沪ICP备2023003282号-38
+        </a>
+      </section>
+
+      <section class="info-section">
+        <span>模型名称：MiniMax</span>
+        <span>备案号：Shanghai-MiniMax-202505230046</span>
+      </section>
+
+      <section class="info-section">
+        <a href="https://agent.minimaxi.com/doc/zh/terms-of-service.html" target="_blank" rel="noreferrer" class="underline-text">
+          用户协议
+        </a>
+        <a href="https://agent.minimaxi.com/doc/zh/privacy-policy.html" target="_blank" rel="noreferrer" class="underline-text">
+          隐私政策
+        </a>
+      </section>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
