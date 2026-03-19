@@ -3,17 +3,18 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# Copy package files first for better caching
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Copy package files for dependency install
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --omit=dev
+# Install dependencies (production only)
+RUN npm ci
 
-# Copy app code
+# Copy application code
 COPY . .
 
-# Expose port
 EXPOSE 3001
 
-# Start the app
-CMD ["npm", "start"]
+CMD ["node", "server/index.js"]
