@@ -8,13 +8,17 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Ensure uploads directory
+// uploads dir - only create locally (Vercel has read-only filesystem)
 const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+try { if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true }); } catch (e) {}
+
+const FRONTEND_DIR = process.env.VERCEL
+  ? path.join(__dirname, '..', 'frontend', 'dist')
+  : path.join(__dirname, 'public');
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(FRONTEND_DIR));
 
 // ========== CONFIG ==========
 const CONFIG_FILE = path.join(__dirname, 'config.json');
@@ -320,7 +324,7 @@ app.use('/uploads', express.static(uploadsDir));
 
 // SPA fallback
 app.get('/{*path}', (req, res) => {
-  const indexPath = path.join(__dirname, 'public', 'index.html');
+  const indexPath = path.join(FRONTEND_DIR, 'index.html');
   if (fs.existsSync(indexPath)) res.sendFile(indexPath);
   else res.send('<html><body><h1>Etsy688 Local</h1><p><a href="/admin">Admin</a></p></body></html>');
 });

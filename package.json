@@ -3,7 +3,9 @@
   "version": "1.0.1",
   "description": "Etsy688 Local AI Creative Tool",
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "build": "cd frontend && npm install && npm run build",
+    "install": "cd frontend && npm install"
   },
   "engines": {
     "node": ">=18.0.0"
