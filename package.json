@@ -4,7 +4,8 @@
   "description": "Etsy688 Local AI Creative Tool",
   "scripts": {
     "start": "node server/index.js",
-    "build": "cd frontend && npm install && npm run build",
+    "build": "cd frontend && npm install && npm run build && cp -r dist ../dist",
+    "postbuild": "cp -r frontend/dist ./dist",
     "install": "cd frontend && npm install"
   },
   "engines": {

@@ -6,20 +6,16 @@
       "use": "@vercel/node"
     },
     {
-      "src": "frontend/dist/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "frontend/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "frontend/dist" }
+      "config": { "distDir": "dist" }
     }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "server/index.js" },
     { "src": "/admin", "dest": "server/index.js" },
     { "src": "/uploads/(.*)", "dest": "server/index.js" },
-    { "src": "/assets/(.*)", "dest": "frontend/dist/assets/$1" },
-    { "src": "/(.*)", "dest": "frontend/dist/index.html" }
+    { "src": "/assets/(.*)", "dest": "dist/assets/$1" },
+    { "src": "/(.*)", "dest": "dist/index.html" }
   ]
 }
