@@ -1,0 +1,4 @@
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: #0f0f0f; color: #fff; font-family: system-ui, sans-serif; }
+input, select, button { font-size: 14px; }
+img { max-width: 100%; }
