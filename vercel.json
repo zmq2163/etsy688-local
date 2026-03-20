@@ -3,19 +3,39 @@
   "builds": [
     {
       "src": "server/index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 30
+      }
     },
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "server/index.js" },
-    { "src": "/admin", "dest": "server/index.js" },
-    { "src": "/uploads/(.*)", "dest": "server/index.js" },
-    { "src": "/assets/(.*)", "dest": "dist/assets/$1" },
-    { "src": "/(.*)", "dest": "dist/index.html" }
+    {
+      "src": "/api/(.*)",
+      "dest": "server/index.js"
+    },
+    {
+      "src": "/admin",
+      "dest": "server/index.js"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "server/index.js"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "dist/assets/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "dist/index.html"
+    }
   ]
 }
